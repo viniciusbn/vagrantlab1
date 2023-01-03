@@ -1,5 +1,9 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "hashicorp/bionic64"
+  config.vm.provider "virtualbox" do |virtualbox|
+    virtualbox.memory = 512
+    virtualbox.cpus = 1
+  end
 
   # config.vm.define "mysqldb" do |mysql|
   #   $script_mysql = <<-SCRIPT
@@ -18,6 +22,11 @@ Vagrant.configure("2") do |config|
   # end
 
   config.vm.define "phpweb" do |phpweb|
+    phpweb.vm.provider "virtualbox" do |virtualbox|
+      virtualbox.memory = 1024
+      virtualbox.cpus = 2
+      virtualbox.name = "ubuntu_bionirc_php7"
+    end
     phpweb.vm.network "forwarded_port", id: "httpd", guest: 80, host: 8080, host_ip: "127.0.0.1", protocol: "tcp"
     phpweb.vm.network "forwarded_port", id: "httpdPHP", guest: 8888, host: 8888, host_ip: "127.0.0.1", protocol: "tcp"
     phpweb.vm.network "private_network", ip: "192.168.50.10"
@@ -55,5 +64,14 @@ Vagrant.configure("2") do |config|
               chmod 600 /home/vagrant/id_bionic && \
               chown vagrant:vagrant /home/vagrant/id_bionic"
     ansible.vm.provision "shell", inline: "ansible-playbook -i /configs/ansible/hosts /configs/ansible/playbook.yml"
+  end
+
+  config.vm.define "memcached" do |memcached|
+    memcached.vm.box = "centos/7"
+    memcached.vm.provider "virtualbox" do |vb|
+        vb.memory = 512
+        vb.cpus = 1
+        vb.name = "centos7_memcached"
+    end
   end
 end
