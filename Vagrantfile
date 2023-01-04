@@ -74,4 +74,31 @@ Vagrant.configure("2") do |config|
         vb.name = "centos7_memcached"
     end
   end
+  config.vm.define "dockerhost" do |dockerhost|
+  dockerhost.vm.provider "virtualbox" do |virtualbox|
+      virtualbox.memory = 512
+      virtualbox.cpus = 1
+      virtualbox.name = "ubuntu_dockerhost"
+  end
+  $script_docker = <<-SCRIPT
+    apt update && \
+    apt install -y \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    apt update && \
+    apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+  SCRIPT
+  dockerhost.vm.network "private_network", ip: "192.168.50.50"
+  dockerhost.vm.synced_folder "./configs", "/configs"
+  dockerhost.vm.provision "shell", inline: $script_docker
+  dockerhost.vm.provision "shell", inline: "cat /configs/id_bionic.pub >> .ssh/authorized_keys"
+  end
 end
